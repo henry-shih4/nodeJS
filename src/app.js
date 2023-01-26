@@ -1,5 +1,8 @@
 const express = require("express");
 const app = express();
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 const PORT = 3000;
 
 const json = [
@@ -51,6 +54,11 @@ app.get("/api/products", (req, res) => {
 
 app.post("/", (req, res) => {
   res.send("this is a post request");
+});
+
+app.post("/api/products", (req, res) => {
+  console.log(req.body);
+  res.send(req.body);
 });
 
 app.listen(PORT, () => {
