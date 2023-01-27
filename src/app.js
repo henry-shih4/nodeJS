@@ -1,9 +1,20 @@
 const express = require("express");
+const mongoose = require("mongoose");
+const Product = require("./models/product");
 const app = express();
+mongoose.set("strictQuery", false);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-const PORT = 3000;
+
+if (process.env.NODE_ENV !== "production") {
+  require("dotenv").config();
+}
+
+const PORT = process.env.PORT || 3000;
+const CONNECTION =
+  process.env.CONNECTION ||
+  "mongodb+srv://test_user:iH8newpw!!@cluster0.y0wvexw.mongodb.net/products?retryWrites=true&w=majority";
 
 const json = [
   {
@@ -44,23 +55,58 @@ const json = [
   },
 ];
 
+const product = new Product({
+  name: "Free Runs",
+  price: 99,
+});
+
 app.get("/", (req, res) => {
   res.send("welcome to api");
 });
 
-app.get("/api/products", (req, res) => {
-  res.send({ data: json });
+app.get("/api/products", async (req, res) => {
+  // console.log(await mongoose.connection.db.listCollections().toArray())
+  try {
+    const result = await Product.find();
+    res.send({ products: result });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+    console.log(error);
+  }
 });
 
-app.post("/", (req, res) => {
-  res.send("this is a post request");
+app.get("/api/products/:id", async (req, res) => {
+  console.log({ requestParams: req.params });
+  try {
+    const {id} = req.params;
+    const result = await Product.findById(id);
+    res.send({ product: result });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+    console.log(error);
+  }
 });
 
-app.post("/api/products", (req, res) => {
+app.post("/api/products", async (req, res) => {
   console.log(req.body);
-  res.send(req.body);
+  const product = new Product(req.body);
+  try {
+    await product.save();
+    res.status(201).json({ product });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
 });
 
-app.listen(PORT, () => {
-  console.log("App listening on " + PORT);
-});
+const start = async () => {
+  try {
+    await mongoose.connect(CONNECTION);
+    app.listen(PORT, () => {
+      console.log("App listening on " + PORT);
+    });
+  } catch (error) {
+    console.log(error.message);
+  }
+};
+
+start();
