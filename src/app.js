@@ -61,11 +61,11 @@ const product = new Product({
 });
 
 app.get("/", (req, res) => {
-  res.send("welcome to api");
+  res.send("welcome to shoe products api");
 });
 
 app.get("/api/products", async (req, res) => {
-  // console.log(await mongoose.connection.db.listCollections().toArray())
+  //   console.log(await mongoose.connection.db.listCollections().toArray())
   try {
     const result = await Product.find();
     res.send({ products: result });
@@ -78,12 +78,38 @@ app.get("/api/products", async (req, res) => {
 app.get("/api/products/:id", async (req, res) => {
   console.log({ requestParams: req.params });
   try {
-    const {id} = req.params;
+    const { id } = req.params;
     const result = await Product.findById(id);
-    res.send({ product: result });
+    if (result === null) {
+      res.send({ product: "product not found" });
+    } else {
+      res.send({ product: result });
+    }
   } catch (error) {
     res.status(500).json({ error: error.message });
     console.log(error);
+  }
+});
+
+app.put("/api/products/:id", async (req, res) => {
+  try {
+    const productId = req.params.id;
+    const result = await Product.replaceOne({ _id: productId }, req.body);
+    console.log(result);
+    res.json({ updatedCount: result.modifiedCount });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete("/api/products/:id", async (req, res) => {
+  try {
+    const productId = req.params.id;
+    const result = await Product.deleteOne({ _id: productId });
+    console.log(result);
+    res.json({ deletedCount: result.deletedCount });
+  } catch (error) {
+    res.status(500).json({ error: "something went wrong" });
   }
 });
 
